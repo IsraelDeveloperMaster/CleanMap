@@ -50,22 +50,16 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+//    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
 
     //todo Firebase
-//    implementation(libs.firebase.database.ktx)
-//    implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.bom)
-//    implementation(libs.firebase.analytics)
-
-//    implementation(libs.firebase.storage.ktx)
-//    implementation(libs.google.firebase.firestore.ktx)
-//    implementation(libs.google.firebase.storage.ktx)
 
     //todo Google Maps
     implementation(libs.play.services.maps)
