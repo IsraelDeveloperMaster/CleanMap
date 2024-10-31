@@ -38,14 +38,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
      */
 
 
-
     //todo firebase
     private lateinit var database: FirebaseFirestore
     private lateinit var dataClassLatitudeLongitud: dataClassLatitudeLongitude
 
     //todo lista de marcadores
-    private val listaMarcadores = mutableListOf<Marker>()
-    private val markerIds: MutableList<String> = mutableListOf()
+//    private val listaMarcadores = mutableListOf<Marker>()
+    private val listaMarcadores: MutableList<Marker> = mutableListOf()
 
     //////// GOOGLE MAP ////////
 
@@ -117,17 +116,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
 
             criandoMarcadoresSalvaFirebase(latitudeLongitude)
 
-
         }
 
         //todo removendo marcador do mapa com um clique
         googleMap.setOnMarkerClickListener { marcador ->
 
-            funcaoListarLatitudeLongitude(marcador)
+//            listarLatitudeLongitude(marcador)
 
-//            removeMarcadoresClicando(marcador)
-
-//            FirebaseFirestore.getInstance().collection("CleanMap").document().delete()
+            removeMarcadoresClicando(marcador)
 
 //            Log.d("delete firebase", "item deletado: ${listaMarcadores.indexOf(marcador)}")
 
@@ -142,9 +138,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
     }
 
 
-    private fun funcaoListarLatitudeLongitude(marcador: Marker) {
+    private fun listarLatitudeLongitude(marcador: Marker) {
 
         var listaDeMarcadoresResultado = ""
+
+        //todo documetId
+        var documentId = ""
 
         val listaDeMarcadoresRetornados = FirebaseFirestore.getInstance().collection("CleanMap")//todo collection
 
@@ -170,19 +169,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
                     //todo animacao da camera
                     googleMap.animateCamera( CameraUpdateFactory.newLatLngZoom(marcadoresFavoritos, 30f), 2000, null )
 
-                    //todo log
 
                     if (marcador.position == marcadoresFavoritos) {
 
                         listaDeMarcadoresResultado += (" id: ${id} \n latitude: ${latitude} \n longitude: ${longitude} \n \n ")
 
-                        Log.d( "lista id firebase", "lista De Marcadores pelo id: " + listaDeMarcadoresResultado )
+                        FirebaseFirestore.getInstance().collection("CleanMap").document(id).delete()
+
+                        Log.d( "lista id firebase", "lista De Marcadores pelo id: " + documentId )
                     }
                 }
             }
         }
     }
-
 
     private fun funcaoCopiaDocumentId() {
 
@@ -227,6 +226,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
         marcador.remove()
 
         listaMarcadores.remove(marcador)
+
+//        listaMarcadores.remove()
+
+        listarLatitudeLongitude(marcador)
 
         Toast.makeText(this, "Marcador removido", Toast.LENGTH_SHORT).show()
     }
