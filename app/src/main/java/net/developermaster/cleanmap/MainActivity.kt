@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Dot
 import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
@@ -26,12 +27,25 @@ import com.google.firebase.firestore.FirebaseFirestore
 import net.developermaster.cleanmap.databinding.ActivityMainBinding
 import net.developermaster.cleanmap.model.dataClassLatitudeLongitude
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback,
-    GoogleMap.OnMyLocationButtonClickListener /*, OnMyLocationClickListener*/ {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback ,
+    GoogleMap.OnMyLocationButtonClickListener {
+
+    /**
+     *
+     * Hola yo del futuro, porfa perdoname, lamiento mucho por este Codigo Mierda 😬
+     * Hola eu do futuro, desculpe, muitas desculpas por este codigo merda 😬
+     *
+     */
+
+
 
     //todo firebase
     private lateinit var database: FirebaseFirestore
     private lateinit var dataClassLatitudeLongitud: dataClassLatitudeLongitude
+
+    //todo lista de marcadores
+    private val listaMarcadores = mutableListOf<Marker>()
+    private val markerIds: MutableList<String> = mutableListOf()
 
     //////// GOOGLE MAP ////////
 
@@ -103,39 +117,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
 
             criandoMarcadoresSalvaFirebase(latitudeLongitude)
 
+
         }
 
-        criandoMarcadores()
+        //todo removendo marcador do mapa com um clique
+        googleMap.setOnMarkerClickListener { marcador ->
+
+            funcaoListarLatitudeLongitude(marcador)
+
+//            removeMarcadoresClicando(marcador)
+
+//            FirebaseFirestore.getInstance().collection("CleanMap").document().delete()
+
+//            Log.d("delete firebase", "item deletado: ${listaMarcadores.indexOf(marcador)}")
+
+            true
+        }
+
+//        criandoMarcadores()
 
         listandoMarcadoresSalvosFirebase()
 
         habilitarBotaoMinhaLocalizacao()
     }
 
-    private fun criandoMarcadoresSalvaFirebase(latitudeLongitude: LatLng) {
 
-        //todo Armazena a posição do marcador
-        marcadorNovo = latitudeLongitude
-
-        googleMap.addMarker(
-            MarkerOptions().position(marcadorNovo!!).title("Novo marcador")
-                .snippet("Descrição do marcador")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_architecture))
-        )
-
-        //todo salva no firebase
-        FirebaseFirestore.getInstance().collection("CleanMap").document().set(marcadorNovo!!)
-
-        Toast.makeText(this, "Novo marcador firebase criado", Toast.LENGTH_SHORT).show()
-
-    }
-
-    private fun listandoMarcadoresSalvosFirebase() {
+    private fun funcaoListarLatitudeLongitude(marcador: Marker) {
 
         var listaDeMarcadoresResultado = ""
 
-        val listaDeMarcadoresRetornados =
-            FirebaseFirestore.getInstance().collection("CleanMap")//todo collection
+        val listaDeMarcadoresRetornados = FirebaseFirestore.getInstance().collection("CleanMap")//todo collection
 
         listaDeMarcadoresRetornados.addSnapshotListener { dadosRetornados, error ->
 
@@ -151,28 +162,141 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
                     val latitude = dados["latitude"]
                     val longitude = dados["longitude"]
 
-                    listaDeMarcadoresResultado += (" id: ${id} \n latitude: ${latitude} \n longitude: ${longitude} \n \n ")
-                    Log.d("firebase", "listandoMarcadoresSalvosFirebase: " + listaDeMarcadoresResultado)
-
                     val marcadoresFavoritos = LatLng(latitude as Double, longitude as Double)
 
-                    //todo marcador
-//                    val lugarFavorito = LatLng(61.044195, -18.5363842)
-
-                    googleMap
-                        .addMarker( MarkerOptions()
-                            .position(marcadoresFavoritos).title("Mi playa favorita!")
-                            .snippet("Ilhas Canarias")
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_architecture))
-                        )
+                    //todo adiciona marcador na lista
+                    listaMarcadores.add( googleMap.addMarker( MarkerOptions().position(marcadoresFavoritos) )!! )
 
                     //todo animacao da camera
-                    googleMap
-                        .animateCamera(CameraUpdateFactory.newLatLngZoom(marcadoresFavoritos, 30f), 2000, null)
+                    googleMap.animateCamera( CameraUpdateFactory.newLatLngZoom(marcadoresFavoritos, 30f), 2000, null )
+
+                    //todo log
+
+                    if (marcador.position == marcadoresFavoritos) {
+
+                        listaDeMarcadoresResultado += (" id: ${id} \n latitude: ${latitude} \n longitude: ${longitude} \n \n ")
+
+                        Log.d( "lista id firebase", "lista De Marcadores pelo id: " + listaDeMarcadoresResultado )
+                    }
                 }
             }
         }
     }
+
+
+    private fun funcaoCopiaDocumentId() {
+
+        FirebaseFirestore.getInstance().collection("CleanMap").get()
+
+            .addOnSuccessListener { resultado ->
+
+                listaMarcadores.clear()
+
+                for (documento in resultado) {
+
+//                    val documentId = documento.toObject(dataClassLatitudeLongitud::class.java)
+//documentId?.id = documento.id
+
+//                    listaMarcadores.add(documentId)
+
+//                    Log.d("documentId", "id: ${documentId.id}")
+
+                }
+            }
+
+            .addOnFailureListener { Se_Falhar ->
+
+                val erro = Se_Falhar.message
+                val causa = Se_Falhar.cause
+
+                Log.d("Erro", "Erro: $erro \n\n Causa: $causa")
+            }
+    }
+
+    private fun deletaMarcadoresClicando(itemQueSeraDeletado: String, position: Int) {
+
+//        funcaoQueCopiaObjetoId()
+
+        FirebaseFirestore.getInstance().collection("CleanMap").document(itemQueSeraDeletado)
+            .delete()
+
+    }
+
+    private fun removeMarcadoresClicando(marcador: Marker) {
+
+        marcador.remove()
+
+        listaMarcadores.remove(marcador)
+
+        Toast.makeText(this, "Marcador removido", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun criandoMarcadoresSalvaFirebase(latitudeLongitude: LatLng) {
+
+        //todo Armazena a posição do marcador
+        marcadorNovo = latitudeLongitude
+
+        googleMap
+
+            .addMarker(
+                MarkerOptions().position(marcadorNovo!!)
+//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_architecture))
+            ).let { listaMarcadores.add(it!!) }
+
+        //todo salva no firebase
+        FirebaseFirestore.getInstance().collection("CleanMap").document().set(marcadorNovo!!)
+
+        //todo animacao da camera
+        googleMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(marcadorNovo!!, 30f), 2000, null
+        )
+
+        Toast.makeText(this, "Novo marcador firebase criado", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun listandoMarcadoresSalvosFirebase() {
+
+        var listaDeMarcadoresResultado = ""
+
+        val listaDeMarcadoresRetornados = FirebaseFirestore.getInstance().collection("CleanMap")//todo collection
+
+        listaDeMarcadoresRetornados.addSnapshotListener { dadosRetornados, error ->
+
+            val marcadoresRetornados = dadosRetornados?.documents//todo document
+
+            marcadoresRetornados?.forEach { documents ->
+
+                val dados = documents?.data //todo dados do documento retornado
+
+                if (dados != null) {
+
+                    val id = documents.id
+                    val latitude = dados["latitude"]
+                    val longitude = dados["longitude"]
+
+                    val marcadoresFavoritos = LatLng(latitude as Double, longitude as Double)
+
+                    //todo adiciona marcador na lista
+                    listaMarcadores.add( googleMap.addMarker( MarkerOptions().position(marcadoresFavoritos) )!! )
+
+                    //todo animacao da camera
+                    googleMap.animateCamera( CameraUpdateFactory.newLatLngZoom(marcadoresFavoritos, 30f), 2000, null )
+
+                    //todo log
+                    listaDeMarcadoresResultado += (" id: ${id} \n latitude: ${latitude} \n longitude: ${longitude} \n \n ")
+                    Log.d( "lista firebase", "lista De Marcadores Resultado: " + listaDeMarcadoresResultado )
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
 
 
     private fun funcaoListarTodos() {
